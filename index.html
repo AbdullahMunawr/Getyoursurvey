@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Camera Feed Snapshot</title>
+  <style>
+    video {
+      width: 60%;
+      border: 3px solid #00796b;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sending Live Camera Snapshots</h1>
+  <video id="cameraFeed" autoplay playsinline></video>
+  <script>
+    const video = document.getElementById("cameraFeed");
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        video.srcObject = stream;
+
+        // Canvas to capture frames
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        setInterval(() => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const base64Image = canvas.toDataURL("image/jpeg");
+
+          // Send to server
+          fetch("http://localhost:3000/upload", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ image: base64Image })
+          }).catch(console.error);
+
+        }, 1000); // 1 snapshot per second
+      })
+      .catch(err => {
+        console.error("Camera access error", err);
+      });
+  </script>
+</body>
+</html>
